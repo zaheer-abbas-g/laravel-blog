@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use Illuminate\Http\Request;
 use App\Models\User;
 
@@ -13,7 +14,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return view('admin.users.users',[
+        return view('admin.users.index',[
             'data' => $users
         ]);
     }
@@ -23,7 +24,8 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.add_user');
+        $roles = Role::all();
+        return view('admin.users.store',['roles'=>$roles]);
     }
 
     /**
@@ -35,14 +37,14 @@ class UserController extends Controller
             'name' => 'required|min:6|max:30',
             'email'=> 'required|email|unique:users|max:255',
             'password' => 'required|min:5',
+            'roles' => 'required'
         ]);
 
-       $user = User::create($validation);
 
-       return response()->json([
-        'message'=> 'Successfully User Added',
-        'data' => $user
-       ]);
+       $user = User::create($validation);
+       $user->roles()->attach($request->roles);
+
+       return redirect()->route('users.index')->with('success', 'User Added successfully');
     }
 
     /**
@@ -50,8 +52,8 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-         return response()->json([
-            'data' => $user,
+         return view('admin.users.show',[
+            'user' => $user
          ]);
     }
 
@@ -60,8 +62,11 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('admin.users.edit_user',[
-            'data' => $user
+        $roles = Role::all();
+        return view('admin.users.update',[
+            'user' => $user,
+            'user_roles' => $user->roles->pluck('id')->toArray(),
+            'roles' => $roles
         ]);
     }
 
@@ -74,14 +79,13 @@ class UserController extends Controller
             'name' => 'required|min:6|max:30',
             'email'=> 'required|email|max:255',
             'password' => 'required|min:5',
+            'roles' => 'required'
         ]);
 
         $user->update($validation);
+        $user->assignRoles($request->roles);
 
-        return response()->json([
-            'message'=> 'Successfully User Updated',
-            'data' => $user
-        ]);
+        return redirect()->route('users.show', $user->id)->with('success', 'User updated successfully');
         
     }
 
@@ -91,8 +95,7 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
-        return response()->json([
-            'message'=> 'user deleted'
-        ]);
+        return redirect()->route('users.index')->with('success', 'User Removed successfully');
+
     }
 }

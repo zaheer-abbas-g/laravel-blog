@@ -12,7 +12,8 @@ class RoleController extends Controller
      */
     public function index()
     {
-        //
+        $roles = Role::all();
+        return view('admin.roles.index',['roles'=> $roles]);
     }
 
     /**
@@ -20,7 +21,7 @@ class RoleController extends Controller
      */
     public function create()
     {
-        //
+        return view('admin.roles.store');
     }
 
     /**
@@ -28,7 +29,14 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validation = $request->validate([
+            'name' => 'required|unique:roles|min:3|max:30',
+            'slug'=> 'required|unique:roles|max:255',
+        ]);
+
+       $role = Role::create($validation);
+
+       return redirect()->route('roles.index')->with('success', 'Role Added successfully');
     }
 
     /**
@@ -36,7 +44,9 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
-        //
+        return view('admin.roles.show',[
+            'role' => $role
+         ]);
     }
 
     /**
@@ -44,7 +54,9 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
-        //
+        return view('admin.roles.update',[
+            'role' => $role
+        ]);
     }
 
     /**
@@ -52,7 +64,16 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
-        //
+        $validation = $request->validate([
+            'name' => 'required|min:3|max:30',
+            'slug'=> 'required|max:255',
+            
+        ]);
+
+        $role->update($validation);
+
+        return redirect()->route('roles.show', $role->id)->with('success', 'Role updated successfully');
+        
     }
 
     /**
@@ -60,6 +81,7 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        //
+        $role->delete();
+        return redirect()->route('roles.index')->with('success', 'Role Removed successfully');
     }
 }
